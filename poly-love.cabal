@@ -66,6 +66,7 @@ executable poly-love
                   , Genome , Strategy.Classic
                            , Strategy.HallOfFame
                            , Strategy.IslandModel
+                  , Mutation.Vec
               
 
     -- LANGUAGE extensions used by modules in this package.

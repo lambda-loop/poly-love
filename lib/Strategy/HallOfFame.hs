@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE UndecidableInstances #-} -- :P
 
 module Strategy.HallOfFame where
 
@@ -14,7 +15,6 @@ import System.Exit
 import qualified Data.Heap as Heap
 import qualified Data.Vector.Strict as Vect -- TODO: delete_it
 import qualified Data.Vector.Strict.Mutable as MVec
-import qualified Data.Set as Set
 import qualified Data.Foldable as Heap hiding (minimum)
 
 import qualified Data.List as List
@@ -24,7 +24,7 @@ import GHC.IO.Unsafe (unsafePerformIO)
 
 
 newtype Indexed a = Indexed (Int, a)
-  deriving (Eq)
+  deriving (Eq, Show)
 
 instance (Genome a, Eq a, Ord b) => Ord (Indexed (Fen a b)) where
   Indexed (_, l) `compare` Indexed (_, r) = l `compare` r
@@ -33,7 +33,10 @@ instance (Genome a, Eq a, Ord b) => Ord (Indexed (Fen a b)) where
 data Table a = Table
   { heap :: Heap.Heap (Indexed (Fen a (Score a))) -- WARNING: ugly!
   , vect :: MVec.IOVector a
-  } -- deriving (Show) 
+  } 
+
+instance (Show a, Show (Score a)) => Show (Table a) where
+  show Table {..} = show heap
 
 tMin :: Table a -> (Score a, Table a)
 tMin t = 
@@ -100,7 +103,6 @@ setup n = do
             |> Vect.fromList 
 
   where (|>) = flip ($)
-  
 
 evolve :: forall a. (Eq a, Show a, Ord a, Genome a, Eq (Score a), Show (Score a), Ord (Score a)) => IO a
 evolve = do
