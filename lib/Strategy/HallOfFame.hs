@@ -22,23 +22,23 @@ import qualified Data.Ord
 import qualified System.Random.MWC as MWC
 import GHC.IO.Unsafe (unsafePerformIO)
 
+
+newtype Indexed a = Indexed (Int, a)
+  deriving (Eq)
+
+instance (Genome a, Eq a, Ord b) => Ord (Indexed (Fen a b)) where
+  Indexed (_, l) `compare` Indexed (_, r) = l `compare` r
+
 -- TODO: type families for vectors with exact size?
 data Table a = Table
-  { heap :: Heap.Heap (Indexed (Score a))
+  { heap :: Heap.Heap (Indexed (Fen a (Score a))) -- WARNING: ugly!
   , vect :: MVec.IOVector a
-  , set  :: Set.Set a
-  } -- deriving (Show) -- TODO: use the Heap to check instead of having a whole Set..
+  } -- deriving (Show) 
 
 tMin :: Table a -> (Score a, Table a)
 tMin t = 
-  let Indexed (_, !min_score) = Heap.minimum (heap t)
+  let Indexed (_, Fen _ !min_score) = Heap.minimum (heap t)
   in (min_score, t)
-
-tMax :: (Eq (Score a), Ord (Score a)) => Table a -> (Indexed (Score a), Table a)
-tMax t = (Heap.maximum (heap t), t)
-
--- idx :: Int -> Table a -> a
--- idx i = (Vect.! i) . vect
 
 -- N Times :P 
 singlesFrom :: Int -> Vect.Vector a -> MWC.GenIO -> IO (Vect.Vector a)
@@ -55,28 +55,21 @@ pairsFrom n v gen = do
   js <- Vect.replicateM n $ MWC.uniformR (0, v_len - 1) gen
   pure $ Vect.zipWith (\i j -> (v Vect.! i, v Vect.! j)) is js
 
-newtype Indexed b = Indexed (Int, b)
-  deriving (Eq)
-
-instance Ord b => Ord (Indexed b) where
-  Indexed (_, l) `compare` Indexed (_, r) = l `compare` r
-
 build :: forall a. (Genome a, Ord a, Ord (Score a)) => Vect.Vector a -> IO (Table a)
 build vec = do
   m_vec <- Vect.thaw vec
   let !fens = fit <$> Vect.toList vec
-      !(gs, ss) = List.unzip $ (\(Fen g s) -> (g, s)) <$> fens
-      !i_ss::[Indexed (Score a)] = Indexed <$> zip [0..] ss
+      !(gs, fs) = List.unzip $ (\fen@(Fen g _) -> (g, fen)) <$> fens
+      !i_ss = Indexed <$> zip [0..] fs
 
   pure $ Table {
     heap = Heap.fromList i_ss,
-    vect = m_vec,
-    set  = Set.fromList gs
+    vect = m_vec
   }
 
 insert :: (Genome a, Ord a, Ord (Score a)) => Table a -> Fen a (Score a) -> STM (Table a)
-insert t@Table {..} (Fen x score) 
-  | x `Set.member` set = pure t
+insert t@Table {..} fen@(Fen x score) 
+  | Indexed (0, fen)  `Heap.elem` heap = pure t -- 0 is a place holder
   | otherwise = do
     let Indexed (!min_idx, _) = Heap.minimum heap
     !val <- pure . unsafePerformIO $ do 
@@ -84,13 +77,13 @@ insert t@Table {..} (Fen x score)
       MVec.write vect min_idx x 
       pure val
 
-    let !set'   = Set.delete val set
-        !heap'  = Heap.adjustMin (\_ -> Indexed (min_idx, score)) heap
+    let !heap' = Heap.adjustMin 
+            (\_ -> Indexed (min_idx, Fen val score)) 
+            heap
 
-    pure $ Table {
+    pure Table {
       heap = heap',
-      vect = vect,
-      set  = Set.insert x set'
+      vect = vect
     }
 
 type Pop a = StateT (Table a) IO a
@@ -116,7 +109,7 @@ evolve = do
 
   table@Table { heap } <- build gs
 
-  let Indexed (_, !r) = Heap.minimum heap 
+  let Indexed (_, Fen _ !r) = Heap.minimum heap 
   t_ruler <- newTVarIO r
   t_vect <- newTVarIO gs
 
@@ -173,7 +166,7 @@ tableAgent table t_vect t_ruler ruler queue = do
     [] -> tableAgent table t_vect t_ruler ruler queue
     fens' -> do
       table' <- atomically $ foldM insert table fens'
-      let Indexed (_, !ruler') = Heap.minimum (heap table')
+      let Indexed (_, Fen _ !ruler') = Heap.minimum (heap table')
       snapshot <- Vect.freeze (vect table')
 
       atomically $ do
