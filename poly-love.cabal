@@ -66,17 +66,30 @@ executable poly-love
                              , Gen.Evolution.HallOfFame
                              , Gen.Evolution.IslandModel
                   , Funsor
+                  , Genome 
+                  , Strategy.Classic
+                  , Strategy.HallOfFame
+                  , Strategy.IslandModel
               
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.19.2.0
+    build-depends:    deepseq ^>=1.5.1.0
+                    , bitvec ^>=1.1.5.0
+                    , containers ^>=0.6.8
+                    , base ^>=4.19.2.0
+                    , vector
+                    , random
+                    , heaps
+                    , mtl
+                    , stm
+
                     , mwc-random
 
     -- Directories containing source files.
-    hs-source-dirs:   src
+    hs-source-dirs:   src, lib
 
     -- Base language which the package is written in.
     default-language: GHC2021
