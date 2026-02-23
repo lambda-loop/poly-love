@@ -80,6 +80,37 @@ instance Genome Expr where
 
 -- easy: 2x²- 3x + 10
 -- hard: 23x⁴ - 12x³ + 6x² - 8x + 37
+-- harder: 7x⁹−15x⁸+42x⁷+3x⁶−99x⁵+14x⁴−5x³+88x²−2x+101
+harder :: Expr
+harder = Vec.fromList 
+  [ Lit 7, Inp, Mul      -- 7x
+  , Lit 15, Sub          -- 7x - 15
+  , Inp, Mul             -- 7x^2 - 15x
+  
+  , Lit 42, Add          -- 7x^2 - 15x + 42
+  , Inp, Mul             -- 7x^3 - 15x^2 + 42x
+  
+  , Lit 3, Add           -- 7x^3 - 15x^2 + 42x + 3
+  , Inp, Mul             -- 7x^4 - 15x^3 + 42x^2 + 3x
+  
+  , Lit 99, Sub          -- 7x^4 - ... - 99
+  , Inp, Mul             -- 7x^5 - ... - 99x
+  
+  , Lit 14, Add          -- 7x^5 - ... + 14
+  , Inp, Mul             -- 7x^6 - ... + 14x
+  
+  , Lit 5, Sub           -- 7x^6 - ... - 5
+  , Inp, Mul             -- 7x^7 - ... - 5x
+  
+  , Lit 88, Add          -- 7x^7 - ... + 88
+  , Inp, Mul             -- 7x^8 - ... + 88x
+  
+  , Lit 2, Sub           -- 7x^8 - ... - 2
+  , Inp, Mul             -- 7x^9 - ... - 2x
+  
+  , Lit 101, Add         -- 7x^9 - 15x^8 + 42x^7 + 3x^6 - 99x^5 + 14x^4 - 5x^3 + 88x^2 - 2x + 101
+  ]
+
 hard = Vec.fromList 
   [ Lit 23, Inp, Mul     -- 23x
   , Lit 12, Sub          -- 23x - 12
@@ -92,7 +123,7 @@ hard = Vec.fromList
   ]
 -- answer = easy 
 answer :: Expr
-answer = hard
+answer = harder
 easy :: Expr
 easy = Vec.fromList 
   [ Inp, Inp, Mul, Lit 2, Mul  
