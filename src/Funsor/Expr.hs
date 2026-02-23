@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeFamilies #-}
 
-module Funsor where
+module Funsor.Expr where
 
 import Genome
 import Control.Monad
@@ -79,7 +79,7 @@ instance Genome Expr where
   cross = altZipMax
 
 -- easy: 2x²- 3x + 10
--- hard: 23x⁴ - 12x³ + 6x² - 8x + 37
+-- h.Exprard: 23x⁴ - 12x³ + 6x² - 8x + 37
 -- harder: 7x⁹−15x⁸+42x⁷+3x⁶−99x⁵+14x⁴−5x³+88x²−2x+101
 harder :: Expr
 harder = Vec.fromList 
@@ -123,7 +123,7 @@ hard = Vec.fromList
   ]
 -- answer = easy 
 answer :: Expr
-answer = harder
+answer = hard
 easy :: Expr
 easy = Vec.fromList 
   [ Inp, Inp, Mul, Lit 2, Mul  

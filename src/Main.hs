@@ -1,6 +1,6 @@
 module Main where
 import Genome
-import Funsor
+import Funsor.Expr
 import qualified Strategy.IslandModel as IM
 import qualified Strategy.HallOfFame as HF
 
