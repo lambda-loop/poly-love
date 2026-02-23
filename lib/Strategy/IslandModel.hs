@@ -77,7 +77,7 @@ mkAgentCtx :: forall a. (Eq a, Show a, Ord a, Genome a, Eq (Score a), Show (Scor
   -> Vec.Vector a -> IO (AgentCtx a, Table a, Score a)
 mkAgentCtx queue v = do
   t@Table { heap } <- build v
-  let Indexed (_, Fen _ !r) = Heap.minimum heap 
+  let Indexed (_, !r) = Heap.minimum heap 
   t_vec   <- newTVarIO v
   t_ruler <- newTVarIO r
 
