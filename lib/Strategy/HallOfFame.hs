@@ -78,20 +78,23 @@ insert :: (Genome a, Ord a, Ord (Score a)) => Table a -> Fen a (Score a) -> STM 
 insert t@Table {..} (Fen x score) 
   | x `Set.member` set = pure t
   | otherwise = do
-    let Indexed (!min_idx, _) = Heap.minimum heap
-    !val <- pure . unsafePerformIO $ do 
-      val <- MVec.read vect min_idx
-      MVec.write vect min_idx x 
-      pure val
+    let Indexed (!min_idx, min_score) = Heap.minimum heap
 
-    let !set'   = Set.delete val set
-        !heap'  = Heap.adjustMin (\_ -> Indexed (min_idx, score)) heap
+    if score < min_score then pure t
+    else do
+      !val <- pure . unsafePerformIO $ do 
+        val <- MVec.read vect min_idx
+        MVec.write vect min_idx x 
+        pure val
 
-    pure $ Table {
-      heap = heap',
-      vect = vect,
-      set  = Set.insert x set'
-    }
+      let !set'   = Set.delete val set
+          !heap'  = Heap.adjustMin (\_ -> Indexed (min_idx, score)) heap
+
+      pure $ Table {
+        heap = heap',
+        vect = vect,
+        set  = Set.insert x set'
+      }
 
 type Pop a = StateT (Table a) IO a
 
