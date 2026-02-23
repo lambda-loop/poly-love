@@ -74,7 +74,7 @@ build vec = do
     set  = Set.fromList gs
   }
 
-insert :: (Genome a, Ord a, Ord (Score a)) => Table a -> Fen a (Score a) -> STM (Table a)
+insert :: (Genome a, Ord a, Ord (Score a)) => Table a -> Fen a (Score a) -> IO (Table a)
 insert t@Table {..} (Fen x score) 
   | x `Set.member` set = pure t
   | otherwise = do
@@ -82,16 +82,17 @@ insert t@Table {..} (Fen x score)
 
     if score < min_score then pure t
     else do
-      !val <- pure . unsafePerformIO $ do 
+      !val <- do 
         val <- MVec.read vect min_idx
         MVec.write vect min_idx x 
         pure val
 
       let !set'   = Set.delete val set
-          !heap'  = Heap.adjustMin (\_ -> Indexed (min_idx, score)) heap
+          !heap' = Heap.deleteMin heap 
+          !heap''= Heap.insert (Indexed (min_idx, score)) heap'
 
       pure $ Table {
-        heap = heap',
+        heap = heap'',
         vect = vect,
         set  = Set.insert x set'
       }
@@ -174,7 +175,7 @@ tableAgent table t_vect t_ruler ruler queue = do
   case filter (\(Fen _ s) -> s > ruler) fens of
     [] -> tableAgent table t_vect t_ruler ruler queue
     fens' -> do
-      table' <- atomically $ foldM insert table fens'
+      table' <- foldM insert table fens'
       let Indexed (_, !ruler') = Heap.minimum (heap table')
       snapshot <- Vect.freeze (vect table')
 

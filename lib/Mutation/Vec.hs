@@ -34,18 +34,18 @@ singleDelete v gen = do
   if b then do 
     r <- MWC.uniformR (0, i-1) gen 
 
-    putStrLn "left"
-    print i
-    print r
+    -- putStrLn "left"
+    -- print i
+    -- print r
     pure $ Vec.take r vl Vec.++ vr
     
   -- right deletions
   else do
     r <- MWC.uniformR (1, v_len - i) gen
 
-    putStrLn "right"
-    print i
-    print r
+    -- putStrLn "right"
+    -- print i
+    -- print r
     pure $ vl Vec.++ Vec.drop r vr
 
 altZipMin :: Vec.Vector a -> Vec.Vector a -> MWC.GenIO -> IO (Vec.Vector a)
